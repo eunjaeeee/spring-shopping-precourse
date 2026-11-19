@@ -17,7 +17,7 @@ public class ProductService {
     @Transactional
     public ProductResponse create(ProductRequest request) {
         ProductName name = toCheckedName(request.name());
-        Product product = new Product(name, request.price(), request.imageUrl());
+        Product product = new Product(name, new Price(request.price()), request.imageUrl());
         return ProductResponse.from(productRepository.save(product));
     }
 

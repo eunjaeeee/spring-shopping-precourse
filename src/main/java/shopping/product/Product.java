@@ -21,9 +21,9 @@ public class Product {
     protected Product() {
     }
 
-    public Product(ProductName name, int price, String imageUrl) {
+    public Product(ProductName name, Price price, String imageUrl) {
         this.name = name.value();
-        this.price = price;
+        this.price = price.value();
         this.imageUrl = imageUrl;
     }
 

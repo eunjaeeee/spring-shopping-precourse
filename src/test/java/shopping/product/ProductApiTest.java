@@ -81,6 +81,20 @@ class ProductApiTest {
                 .extractingPath("$.message").asString().isNotBlank();
     }
 
+    @ParameterizedTest
+    @ValueSource(ints = {0, -1})
+    @DisplayName("상품 가격이 0원 이하이면 400과 오류 메시지를 응답한다")
+    void respondBadRequestForInvalidPrice(int price) {
+        String request = """
+                {"name": "사과", "price": %d, "imageUrl": "https://example.com/a.png"}
+                """.formatted(price);
+
+        assertThat(postProduct(request))
+                .hasStatus(HttpStatus.BAD_REQUEST)
+                .bodyJson()
+                .extractingPath("$.message").isEqualTo("상품 가격은 1원 이상이어야 합니다.");
+    }
+
     private MockMvcTester.MockMvcRequestBuilder postProduct(String body) {
         return mockMvc.post()
                 .uri("/api/products")
