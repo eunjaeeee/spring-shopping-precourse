@@ -46,4 +46,23 @@ class ProductNameTest {
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("상품 이름은 공백 포함 최대 15자까지 입력할 수 있습니다.");
     }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"사과(대)", "[특가] 사과", "사과+배", "사과-배", "사과&배", "사과/배", "사과_배",
+            "Apple 2kg"})
+    @DisplayName("상품 이름에 ( ) [ ] + - & / _ 특수문자를 허용한다")
+    void acceptAllowedCharacters(String value) {
+        ProductName name = new ProductName(value);
+
+        assertThat(name.value()).isEqualTo(value);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"사과!", "사과@배", "사과#", "사과*", "사과.배", "사과😀"})
+    @DisplayName("허용되지 않은 특수문자가 포함되면 거부한다")
+    void rejectNotAllowedCharacters(String value) {
+        assertThatThrownBy(() -> new ProductName(value))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("상품 이름에는 ( ), [ ], +, -, &, /, _ 외의 특수문자를 사용할 수 없습니다.");
+    }
 }
