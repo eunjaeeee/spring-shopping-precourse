@@ -21,10 +21,10 @@ public class Product {
     protected Product() {
     }
 
-    public Product(ProductName name, Price price, String imageUrl) {
+    public Product(ProductName name, Price price, ImageUrl imageUrl) {
         this.name = name.value();
         this.price = price.value();
-        this.imageUrl = imageUrl;
+        this.imageUrl = imageUrl.value();
     }
 
     public Long getId() {

@@ -95,6 +95,20 @@ class ProductApiTest {
                 .extractingPath("$.message").isEqualTo("상품 가격은 1원 이상이어야 합니다.");
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = {"", "   "})
+    @DisplayName("상품 이미지 URL이 비어 있으면 400과 오류 메시지를 응답한다")
+    void respondBadRequestForBlankImageUrl(String imageUrl) {
+        String request = """
+                {"name": "사과", "price": 1000, "imageUrl": "%s"}
+                """.formatted(imageUrl);
+
+        assertThat(postProduct(request))
+                .hasStatus(HttpStatus.BAD_REQUEST)
+                .bodyJson()
+                .extractingPath("$.message").isEqualTo("상품 이미지 URL은 비어 있을 수 없습니다.");
+    }
+
     private MockMvcTester.MockMvcRequestBuilder postProduct(String body) {
         return mockMvc.post()
                 .uri("/api/products")
