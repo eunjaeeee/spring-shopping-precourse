@@ -4,6 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -57,12 +59,26 @@ class ProductApiTest {
                 """;
 
         assertThat(postProduct(request))
-                .failure()
-                .hasRootCauseInstanceOf(IllegalArgumentException.class)
-                .hasRootCauseMessage("상품 이름에 비속어를 사용할 수 없습니다.");
+                .hasStatus(HttpStatus.BAD_REQUEST)
+                .bodyJson()
+                .extractingPath("$.message").isEqualTo("상품 이름에 비속어를 사용할 수 없습니다.");
         assertThat(productRepository.findAll())
                 .extracting(Product::getName)
                 .doesNotContain(FakeProfanityChecker.PROFANITY);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"", "가나다라마바사아자차카타파하가나", "사과!"})
+    @DisplayName("입력값이 유효하지 않으면 400과 오류 메시지를 응답한다")
+    void respondBadRequestForInvalidName(String name) {
+        String request = """
+                {"name": "%s", "price": 1000, "imageUrl": "https://example.com/a.png"}
+                """.formatted(name);
+
+        assertThat(postProduct(request))
+                .hasStatus(HttpStatus.BAD_REQUEST)
+                .bodyJson()
+                .extractingPath("$.message").asString().isNotBlank();
     }
 
     private MockMvcTester.MockMvcRequestBuilder postProduct(String body) {
