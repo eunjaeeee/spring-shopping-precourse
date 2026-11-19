@@ -28,4 +28,22 @@ class ProductNameTest {
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("상품 이름은 비어 있을 수 없습니다.");
     }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"가나다라마바사아자차카타파하가", "a b c d e f g h"})
+    @DisplayName("상품 이름은 공백을 포함하여 최대 15자까지 허용한다")
+    void acceptNameUpToMaxLength(String value) {
+        ProductName name = new ProductName(value);
+
+        assertThat(name.value()).isEqualTo(value);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"가나다라마바사아자차카타파하가나", "abcdefghijklmnop"})
+    @DisplayName("상품 이름이 15자를 초과하면 거부한다")
+    void rejectNameOverMaxLength(String value) {
+        assertThatThrownBy(() -> new ProductName(value))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("상품 이름은 공백 포함 최대 15자까지 입력할 수 있습니다.");
+    }
 }
