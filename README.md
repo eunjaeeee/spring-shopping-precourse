@@ -5,8 +5,8 @@
 ### 1.1. 상품 관리
 
 **상품 등록**
-- [ ] 상품 이름, 가격, 이미지 URL을 입력받아 상품을 등록한다.
-- [ ] 상품 등록에 성공하면 상품 정보를 저장한다.
+- [x] 상품 이름, 가격, 이미지 URL을 입력받아 상품을 등록한다.
+- [x] 상품 등록에 성공하면 상품 정보를 저장한다.
 
 **상품 조회**
 - [ ] 상품 ID로 특정 상품의 정보를 조회한다.
@@ -82,7 +82,7 @@
 - [ ] `POST /api/members/login` — 로그인 및 토큰 발급
 
 **상품 API**
-- [ ] `POST /api/products` — 상품 등록
+- [x] `POST /api/products` — 상품 등록
 - [ ] `GET /api/products/{productId}` — 상품 조회
 - [ ] `GET /api/products` — 전체 상품 조회
 - [ ] `PUT /api/products/{productId}` — 상품 수정
