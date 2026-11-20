@@ -22,6 +22,12 @@ public class ProductService {
         return ProductResponse.from(productRepository.save(product));
     }
 
+    @Transactional(readOnly = true)
+    public ProductResponse findById(Long id) {
+        Product product = productRepository.findById(id).orElseThrow();
+        return ProductResponse.from(product);
+    }
+
     private ProductName toCheckedName(String value) {
         ProductName name = new ProductName(value);
         if (profanityChecker.containsProfanity(name.value())) {

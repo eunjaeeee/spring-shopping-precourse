@@ -109,6 +109,21 @@ class ProductApiTest {
                 .extractingPath("$.message").isEqualTo("상품 이미지 URL은 비어 있을 수 없습니다.");
     }
 
+    @Test
+    @DisplayName("상품 ID로 특정 상품의 정보를 조회한다")
+    void findProductById() {
+        Product saved = productRepository.save(new Product(
+                new ProductName("포도"), new Price(3000), new ImageUrl("https://example.com/grape.png")));
+
+        assertThat(mockMvc.get().uri("/api/products/{productId}", saved.getId()))
+                .hasStatusOk()
+                .bodyJson()
+                .isLenientlyEqualTo("""
+                        {"id": %d, "name": "포도", "price": 3000,
+                         "imageUrl": "https://example.com/grape.png"}
+                        """.formatted(saved.getId()));
+    }
+
     private MockMvcTester.MockMvcRequestBuilder postProduct(String body) {
         return mockMvc.post()
                 .uri("/api/products")
