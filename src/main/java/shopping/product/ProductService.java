@@ -1,6 +1,7 @@
 package shopping.product;
 
 import org.springframework.stereotype.Service;
+import shopping.common.NotFoundException;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
@@ -24,8 +25,12 @@ public class ProductService {
 
     @Transactional(readOnly = true)
     public ProductResponse findById(Long id) {
-        Product product = productRepository.findById(id).orElseThrow();
-        return ProductResponse.from(product);
+        return ProductResponse.from(getProduct(id));
+    }
+
+    private Product getProduct(Long id) {
+        return productRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 상품입니다."));
     }
 
     private ProductName toCheckedName(String value) {

@@ -124,6 +124,15 @@ class ProductApiTest {
                         """.formatted(saved.getId()));
     }
 
+    @Test
+    @DisplayName("존재하지 않는 상품 ID로 조회하면 404와 오류 메시지를 응답한다")
+    void respondNotFoundForUnknownProduct() {
+        assertThat(mockMvc.get().uri("/api/products/{productId}", Long.MAX_VALUE))
+                .hasStatus(HttpStatus.NOT_FOUND)
+                .bodyJson()
+                .extractingPath("$.message").isEqualTo("존재하지 않는 상품입니다.");
+    }
+
     private MockMvcTester.MockMvcRequestBuilder postProduct(String body) {
         return mockMvc.post()
                 .uri("/api/products")
