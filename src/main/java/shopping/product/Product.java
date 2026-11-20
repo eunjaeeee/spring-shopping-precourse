@@ -27,6 +27,12 @@ public class Product {
         this.imageUrl = imageUrl.value();
     }
 
+    public void update(ProductName name, Price price, ImageUrl imageUrl) {
+        this.name = name.value();
+        this.price = price.value();
+        this.imageUrl = imageUrl.value();
+    }
+
     public Long getId() {
         return id;
     }

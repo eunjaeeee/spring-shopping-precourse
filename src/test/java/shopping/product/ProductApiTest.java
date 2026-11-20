@@ -152,6 +152,51 @@ class ProductApiTest {
                 .extractingPath("$.message").isEqualTo("존재하지 않는 상품입니다.");
     }
 
+    @Test
+    @DisplayName("상품 ID로 기존 상품의 이름, 가격, 이미지 URL을 수정한다")
+    void updateProduct() {
+        Product saved = saveProduct("사과");
+        String request = """
+                {"name": "청사과", "price": 2000, "imageUrl": "https://example.com/green.png"}
+                """;
+
+        assertThat(putProduct(saved.getId(), request))
+                .hasStatusOk()
+                .bodyJson()
+                .extractingPath("$.name").isEqualTo("청사과");
+        Product updated = productRepository.findById(saved.getId()).orElseThrow();
+        assertThat(updated.getName()).isEqualTo("청사과");
+        assertThat(updated.getPrice()).isEqualTo(2000);
+        assertThat(updated.getImageUrl()).isEqualTo("https://example.com/green.png");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"", "가나다라마바사아자차카타파하가나", "사과!", "badword"})
+    @DisplayName("상품 수정 시에도 상품 이름에 대한 유효성 검사를 수행한다")
+    void validateNameOnUpdate(String name) {
+        Product saved = saveProduct("사과");
+        String request = """
+                {"name": "%s", "price": 1000, "imageUrl": "https://example.com/a.png"}
+                """.formatted(name);
+
+        assertThat(putProduct(saved.getId(), request)).hasStatus(HttpStatus.BAD_REQUEST);
+        assertThat(productRepository.findById(saved.getId()).orElseThrow().getName())
+                .isEqualTo("사과");
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 상품 ID로 수정하면 404와 오류 메시지를 응답한다")
+    void respondNotFoundOnUpdate() {
+        String request = """
+                {"name": "사과", "price": 1000, "imageUrl": "https://example.com/a.png"}
+                """;
+
+        assertThat(putProduct(Long.MAX_VALUE, request))
+                .hasStatus(HttpStatus.NOT_FOUND)
+                .bodyJson()
+                .extractingPath("$.message").isEqualTo("존재하지 않는 상품입니다.");
+    }
+
     private Product saveProduct(String name) {
         return productRepository.save(new Product(
                 new ProductName(name), new Price(1000), new ImageUrl("https://example.com/item.png")));
@@ -160,6 +205,13 @@ class ProductApiTest {
     private MockMvcTester.MockMvcRequestBuilder postProduct(String body) {
         return mockMvc.post()
                 .uri("/api/products")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body);
+    }
+
+    private MockMvcTester.MockMvcRequestBuilder putProduct(Long id, String body) {
+        return mockMvc.put()
+                .uri("/api/products/{productId}", id)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body);
     }

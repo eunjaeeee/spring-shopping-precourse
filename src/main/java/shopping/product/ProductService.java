@@ -2,8 +2,8 @@ package shopping.product;
 
 import java.util.List;
 import org.springframework.stereotype.Service;
-import shopping.common.NotFoundException;
 import org.springframework.transaction.annotation.Transactional;
+import shopping.common.NotFoundException;
 
 @Service
 public class ProductService {
@@ -34,6 +34,15 @@ public class ProductService {
         return productRepository.findAll().stream()
                 .map(ProductResponse::from)
                 .toList();
+    }
+
+    @Transactional
+    public ProductResponse update(Long id, ProductRequest request) {
+        Product product = getProduct(id);
+        Price price = new Price(request.price());
+        ImageUrl imageUrl = new ImageUrl(request.imageUrl());
+        product.update(toCheckedName(request.name()), price, imageUrl);
+        return ProductResponse.from(product);
     }
 
     private Product getProduct(Long id) {
