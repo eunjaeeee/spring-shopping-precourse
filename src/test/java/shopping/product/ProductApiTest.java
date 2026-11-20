@@ -2,6 +2,7 @@ package shopping.product;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -24,6 +25,11 @@ class ProductApiTest {
 
     @Autowired
     private ProductRepository productRepository;
+
+    @BeforeEach
+    void setUp() {
+        productRepository.deleteAll();
+    }
 
     @Test
     @DisplayName("상품 이름, 가격, 이미지 URL을 입력받아 상품을 등록한다")
@@ -125,12 +131,30 @@ class ProductApiTest {
     }
 
     @Test
+    @DisplayName("등록된 모든 상품의 목록을 조회한다")
+    void findAllProducts() {
+        saveProduct("수박");
+        saveProduct("참외");
+
+        assertThat(mockMvc.get().uri("/api/products"))
+                .hasStatusOk()
+                .bodyJson()
+                .extractingPath("$[*].name").asArray()
+                .containsExactlyInAnyOrder("수박", "참외");
+    }
+
+    @Test
     @DisplayName("존재하지 않는 상품 ID로 조회하면 404와 오류 메시지를 응답한다")
     void respondNotFoundForUnknownProduct() {
         assertThat(mockMvc.get().uri("/api/products/{productId}", Long.MAX_VALUE))
                 .hasStatus(HttpStatus.NOT_FOUND)
                 .bodyJson()
                 .extractingPath("$.message").isEqualTo("존재하지 않는 상품입니다.");
+    }
+
+    private Product saveProduct(String name) {
+        return productRepository.save(new Product(
+                new ProductName(name), new Price(1000), new ImageUrl("https://example.com/item.png")));
     }
 
     private MockMvcTester.MockMvcRequestBuilder postProduct(String body) {

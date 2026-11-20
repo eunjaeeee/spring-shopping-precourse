@@ -10,7 +10,7 @@
 
 **상품 조회**
 - [x] 상품 ID로 특정 상품의 정보를 조회한다.
-- [ ] 등록된 모든 상품의 목록을 조회한다.
+- [x] 등록된 모든 상품의 목록을 조회한다.
 - [x] 존재하지 않는 상품 ID로 조회하면 오류를 반환한다.
 
 **상품 수정**
@@ -84,7 +84,7 @@
 **상품 API**
 - [x] `POST /api/products` — 상품 등록
 - [x] `GET /api/products/{productId}` — 상품 조회
-- [ ] `GET /api/products` — 전체 상품 조회
+- [x] `GET /api/products` — 전체 상품 조회
 - [ ] `PUT /api/products/{productId}` — 상품 수정
 - [ ] `DELETE /api/products/{productId}` — 상품 삭제
 
