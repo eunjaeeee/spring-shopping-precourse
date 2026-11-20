@@ -10,6 +10,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.assertj.MockMvcTester;
 
 @SpringBootTest
@@ -21,6 +22,9 @@ class MemberApiTest {
 
     @Autowired
     private MemberRepository memberRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @BeforeEach
     void setUp() {
@@ -34,11 +38,29 @@ class MemberApiTest {
                 {"email": "test@example.com", "password": "password123"}
                 """;
 
-        assertThat(mockMvc.post()
+        assertThat(postRegister(request)).hasStatus(HttpStatus.CREATED);
+        assertThat(memberRepository.findByEmail("test@example.com")).isPresent();
+    }
+
+    @Test
+    @DisplayName("비밀번호를 해시 처리하여 저장한다")
+    void savePasswordAsHash() {
+        String request = """
+                {"email": "hash@example.com", "password": "password123"}
+                """;
+
+        assertThat(postRegister(request)).hasStatus(HttpStatus.CREATED);
+        String savedPassword = memberRepository.findByEmail("hash@example.com")
+                .orElseThrow()
+                .getPassword();
+        assertThat(savedPassword).isNotEqualTo("password123");
+        assertThat(passwordEncoder.matches("password123", savedPassword)).isTrue();
+    }
+
+    private MockMvcTester.MockMvcRequestBuilder postRegister(String body) {
+        return mockMvc.post()
                 .uri("/api/members/register")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(request))
-                .hasStatus(HttpStatus.CREATED);
-        assertThat(memberRepository.findByEmail("test@example.com")).isPresent();
+                .content(body);
     }
 }
