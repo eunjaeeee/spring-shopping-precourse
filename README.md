@@ -19,8 +19,8 @@
 - [x] 존재하지 않는 상품 ID로 수정하면 오류를 반환한다.
 
 **상품 삭제**
-- [ ] 상품 ID로 특정 상품을 삭제한다.
-- [ ] 존재하지 않는 상품 ID로 삭제하면 오류를 반환한다.
+- [x] 상품 ID로 특정 상품을 삭제한다.
+- [x] 존재하지 않는 상품 ID로 삭제하면 오류를 반환한다.
 
 ### 1.2. 상품 유효성 검사 및 예외 처리
 
@@ -86,7 +86,7 @@
 - [x] `GET /api/products/{productId}` — 상품 조회
 - [x] `GET /api/products` — 전체 상품 조회
 - [x] `PUT /api/products/{productId}` — 상품 수정
-- [ ] `DELETE /api/products/{productId}` — 상품 삭제
+- [x] `DELETE /api/products/{productId}` — 상품 삭제
 
 **위시 리스트 API**
 - [ ] `POST /api/wishes` — 위시 리스트 상품 추가

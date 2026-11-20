@@ -197,6 +197,25 @@ class ProductApiTest {
                 .extractingPath("$.message").isEqualTo("존재하지 않는 상품입니다.");
     }
 
+    @Test
+    @DisplayName("상품 ID로 특정 상품을 삭제한다")
+    void deleteProduct() {
+        Product saved = saveProduct("사과");
+
+        assertThat(mockMvc.delete().uri("/api/products/{productId}", saved.getId()))
+                .hasStatus(HttpStatus.NO_CONTENT);
+        assertThat(productRepository.existsById(saved.getId())).isFalse();
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 상품 ID로 삭제하면 404와 오류 메시지를 응답한다")
+    void respondNotFoundOnDelete() {
+        assertThat(mockMvc.delete().uri("/api/products/{productId}", Long.MAX_VALUE))
+                .hasStatus(HttpStatus.NOT_FOUND)
+                .bodyJson()
+                .extractingPath("$.message").isEqualTo("존재하지 않는 상품입니다.");
+    }
+
     private Product saveProduct(String name) {
         return productRepository.save(new Product(
                 new ProductName(name), new Price(1000), new ImageUrl("https://example.com/item.png")));

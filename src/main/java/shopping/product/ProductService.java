@@ -45,6 +45,11 @@ public class ProductService {
         return ProductResponse.from(product);
     }
 
+    @Transactional
+    public void delete(Long id) {
+        productRepository.delete(getProduct(id));
+    }
+
     private Product getProduct(Long id) {
         return productRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("존재하지 않는 상품입니다."));

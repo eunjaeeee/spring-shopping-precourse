@@ -3,6 +3,7 @@ package shopping.product;
 import java.net.URI;
 import java.util.List;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -42,5 +43,11 @@ public class ProductController {
     public ResponseEntity<ProductResponse> update(
             @PathVariable Long productId, @RequestBody ProductRequest request) {
         return ResponseEntity.ok(productService.update(productId, request));
+    }
+
+    @DeleteMapping("/{productId}")
+    public ResponseEntity<Void> delete(@PathVariable Long productId) {
+        productService.delete(productId);
+        return ResponseEntity.noContent().build();
     }
 }
