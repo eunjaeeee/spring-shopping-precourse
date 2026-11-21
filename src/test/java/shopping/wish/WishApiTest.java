@@ -170,11 +170,52 @@ class WishApiTest {
                 .extractingPath("$.message").isEqualTo(INVALID_TOKEN_MESSAGE);
     }
 
-    private void addWish(String token, Product product) {
+    @Test
+    @DisplayName("인증된 사용자는 위시 리스트 ID로 자신의 위시 리스트 항목을 삭제할 수 있다")
+    void deleteMyWish() throws Exception {
+        String token = registerAndGetToken("me@example.com");
+        Long wishId = addWish(token, saveProduct("사과"));
+
+        assertThat(deleteWish(wishId).header(HttpHeaders.AUTHORIZATION, bearer(token)))
+                .hasStatus(HttpStatus.NO_CONTENT);
+        assertThat(wishRepository.findById(wishId)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 위시 리스트 ID로 삭제하면 오류를 반환한다")
+    void rejectDeleteUnknownWish() throws Exception {
+        String token = registerAndGetToken("me@example.com");
+
+        assertThat(deleteWish(999999L).header(HttpHeaders.AUTHORIZATION, bearer(token)))
+                .hasStatus(HttpStatus.NOT_FOUND)
+                .bodyJson()
+                .extractingPath("$.message").isEqualTo("존재하지 않는 위시 리스트 항목입니다.");
+    }
+
+    @Test
+    @DisplayName("다른 사용자의 위시 리스트 항목을 삭제할 수 없다")
+    void rejectDeleteOtherMembersWish() throws Exception {
+        String myToken = registerAndGetToken("me@example.com");
+        String otherToken = registerAndGetToken("other@example.com");
+        Long otherWishId = addWish(otherToken, saveProduct("수박"));
+
+        assertThat(deleteWish(otherWishId).header(HttpHeaders.AUTHORIZATION, bearer(myToken)))
+                .hasStatus(HttpStatus.FORBIDDEN)
+                .bodyJson()
+                .extractingPath("$.message").isEqualTo("다른 사용자의 위시 리스트 항목은 삭제할 수 없습니다.");
+        assertThat(wishRepository.findById(otherWishId)).isPresent();
+    }
+
+    private Long addWish(String token, Product product) throws Exception {
         String request = """
                 {"productId": %d}
                 """.formatted(product.getId());
-        postWish(request).header(HttpHeaders.AUTHORIZATION, bearer(token)).exchange();
+        String response = postWish(request)
+                .header(HttpHeaders.AUTHORIZATION, bearer(token))
+                .exchange()
+                .getResponse()
+                .getContentAsString();
+        return JsonPath.parse(response).read("$.id", Long.class);
     }
 
     private String registerAndGetToken(String email) throws Exception {
@@ -209,5 +250,9 @@ class WishApiTest {
 
     private MockMvcTester.MockMvcRequestBuilder getWishes() {
         return mockMvc.get().uri("/api/wishes");
+    }
+
+    private MockMvcTester.MockMvcRequestBuilder deleteWish(Long wishId) {
+        return mockMvc.delete().uri("/api/wishes/{wishId}", wishId);
     }
 }

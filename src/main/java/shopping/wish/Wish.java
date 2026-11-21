@@ -30,6 +30,10 @@ public class Wish {
         this.product = product;
     }
 
+    public boolean isOwnedBy(Long memberId) {
+        return this.memberId.equals(memberId);
+    }
+
     public Long getId() {
         return id;
     }
