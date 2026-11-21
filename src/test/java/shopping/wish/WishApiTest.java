@@ -112,6 +112,39 @@ class WishApiTest {
         assertThat(wishRepository.count()).isZero();
     }
 
+    @Test
+    @DisplayName("이미 추가한 상품을 중복 등록하면 거부한다")
+    void rejectDuplicateWish() throws Exception {
+        String token = registerAndGetToken("wish@example.com");
+        Product product = saveProduct("사과");
+        String request = """
+                {"productId": %d}
+                """.formatted(product.getId());
+        postWish(request).header(HttpHeaders.AUTHORIZATION, bearer(token)).exchange();
+
+        assertThat(postWish(request).header(HttpHeaders.AUTHORIZATION, bearer(token)))
+                .hasStatus(HttpStatus.CONFLICT)
+                .bodyJson()
+                .extractingPath("$.message").isEqualTo("이미 위시 리스트에 추가한 상품입니다.");
+        assertThat(wishRepository.count()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("다른 사용자가 추가한 상품은 내 위시 리스트에 추가할 수 있다")
+    void allowSameProductForOtherMember() throws Exception {
+        String myToken = registerAndGetToken("me@example.com");
+        String otherToken = registerAndGetToken("other@example.com");
+        Product product = saveProduct("사과");
+        String request = """
+                {"productId": %d}
+                """.formatted(product.getId());
+        postWish(request).header(HttpHeaders.AUTHORIZATION, bearer(otherToken)).exchange();
+
+        assertThat(postWish(request).header(HttpHeaders.AUTHORIZATION, bearer(myToken)))
+                .hasStatus(HttpStatus.CREATED);
+        assertThat(wishRepository.count()).isEqualTo(2);
+    }
+
     private String registerAndGetToken(String email) throws Exception {
         String request = """
                 {"email": "%s", "password": "password123"}
