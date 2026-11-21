@@ -2,6 +2,8 @@ package shopping.member;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.jayway.jsonpath.JsonPath;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -12,6 +14,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.assertj.MockMvcTester;
+import org.springframework.test.web.servlet.assertj.MvcTestResult;
+import shopping.auth.AuthToken;
+import shopping.auth.AuthTokenRepository;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -26,8 +31,12 @@ class MemberApiTest {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private AuthTokenRepository authTokenRepository;
+
     @BeforeEach
     void setUp() {
+        authTokenRepository.deleteAll();
         memberRepository.deleteAll();
     }
 
@@ -70,6 +79,25 @@ class MemberApiTest {
                 .bodyJson()
                 .extractingPath("$.message").isEqualTo("이미 가입된 이메일입니다.");
         assertThat(memberRepository.count()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("회원가입에 성공하면 UUID 인증 토큰을 발급한다")
+    void issueTokenOnRegister() throws Exception {
+        String request = """
+                {"email": "token@example.com", "password": "password123"}
+                """;
+
+        MvcTestResult result = postRegister(request).exchange();
+
+        assertThat(result).hasStatus(HttpStatus.CREATED);
+        String token = JsonPath.read(result.getResponse().getContentAsString(), "$.token");
+        assertThat(UUID.fromString(token)).hasToString(token);
+        Member member = memberRepository.findByEmail("token@example.com").orElseThrow();
+        assertThat(authTokenRepository.findByToken(token))
+                .get()
+                .extracting(AuthToken::getMemberId)
+                .isEqualTo(member.getId());
     }
 
     private MockMvcTester.MockMvcRequestBuilder postRegister(String body) {

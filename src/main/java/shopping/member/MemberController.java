@@ -18,8 +18,8 @@ public class MemberController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<Void> register(@RequestBody MemberRequest request) {
-        memberService.register(request);
-        return ResponseEntity.status(HttpStatus.CREATED).build();
+    public ResponseEntity<TokenResponse> register(@RequestBody MemberRequest request) {
+        TokenResponse response = memberService.register(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 }
