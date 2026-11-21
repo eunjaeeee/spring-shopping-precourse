@@ -57,6 +57,21 @@ class MemberApiTest {
         assertThat(passwordEncoder.matches("password123", savedPassword)).isTrue();
     }
 
+    @Test
+    @DisplayName("이미 가입된 이메일이면 회원가입을 거부한다")
+    void rejectDuplicateEmail() {
+        String request = """
+                {"email": "dup@example.com", "password": "password123"}
+                """;
+        postRegister(request).exchange();
+
+        assertThat(postRegister(request))
+                .hasStatus(HttpStatus.CONFLICT)
+                .bodyJson()
+                .extractingPath("$.message").isEqualTo("이미 가입된 이메일입니다.");
+        assertThat(memberRepository.count()).isEqualTo(1);
+    }
+
     private MockMvcTester.MockMvcRequestBuilder postRegister(String body) {
         return mockMvc.post()
                 .uri("/api/members/register")
