@@ -91,9 +91,57 @@ class MemberApiTest {
         MvcTestResult result = postRegister(request).exchange();
 
         assertThat(result).hasStatus(HttpStatus.CREATED);
+        assertTokenIssued(result, "token@example.com");
+    }
+
+    @Test
+    @DisplayName("이메일과 비밀번호가 일치하면 인증 토큰을 발급한다")
+    void loginIssuesToken() throws Exception {
+        String request = """
+                {"email": "login@example.com", "password": "password123"}
+                """;
+        postRegister(request).exchange();
+
+        MvcTestResult result = postLogin(request).exchange();
+
+        assertThat(result).hasStatus(HttpStatus.OK);
+        assertTokenIssued(result, "login@example.com");
+    }
+
+    @Test
+    @DisplayName("비밀번호가 일치하지 않으면 로그인을 거부한다")
+    void rejectWrongPassword() {
+        String register = """
+                {"email": "login@example.com", "password": "password123"}
+                """;
+        String login = """
+                {"email": "login@example.com", "password": "wrong-password"}
+                """;
+        postRegister(register).exchange();
+
+        assertThat(postLogin(login))
+                .hasStatus(HttpStatus.UNAUTHORIZED)
+                .bodyJson()
+                .extractingPath("$.message").isEqualTo("이메일 또는 비밀번호가 일치하지 않습니다.");
+    }
+
+    @Test
+    @DisplayName("가입되지 않은 이메일이면 로그인을 거부한다")
+    void rejectUnknownEmail() {
+        String request = """
+                {"email": "nobody@example.com", "password": "password123"}
+                """;
+
+        assertThat(postLogin(request))
+                .hasStatus(HttpStatus.UNAUTHORIZED)
+                .bodyJson()
+                .extractingPath("$.message").isEqualTo("이메일 또는 비밀번호가 일치하지 않습니다.");
+    }
+
+    private void assertTokenIssued(MvcTestResult result, String email) throws Exception {
         String token = JsonPath.read(result.getResponse().getContentAsString(), "$.token");
         assertThat(UUID.fromString(token)).hasToString(token);
-        Member member = memberRepository.findByEmail("token@example.com").orElseThrow();
+        Member member = memberRepository.findByEmail(email).orElseThrow();
         assertThat(authTokenRepository.findByToken(token))
                 .get()
                 .extracting(AuthToken::getMemberId)
@@ -103,6 +151,13 @@ class MemberApiTest {
     private MockMvcTester.MockMvcRequestBuilder postRegister(String body) {
         return mockMvc.post()
                 .uri("/api/members/register")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body);
+    }
+
+    private MockMvcTester.MockMvcRequestBuilder postLogin(String body) {
+        return mockMvc.post()
+                .uri("/api/members/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body);
     }

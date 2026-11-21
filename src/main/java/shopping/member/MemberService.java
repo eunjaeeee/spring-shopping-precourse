@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import shopping.auth.AuthTokenService;
 import shopping.common.DuplicateException;
+import shopping.common.UnauthorizedException;
 
 @Service
 public class MemberService {
@@ -28,9 +29,21 @@ public class MemberService {
         return new TokenResponse(authTokenService.issue(member.getId()));
     }
 
+    @Transactional
+    public TokenResponse login(MemberRequest request) {
+        Member member = authenticate(request.email(), request.password());
+        return new TokenResponse(authTokenService.issue(member.getId()));
+    }
+
     private void validateNewEmail(String email) {
         if (memberRepository.existsByEmail(email)) {
             throw new DuplicateException("이미 가입된 이메일입니다.");
         }
+    }
+
+    private Member authenticate(String email, String password) {
+        return memberRepository.findByEmail(email)
+                .filter(member -> passwordEncoder.matches(password, member.getPassword()))
+                .orElseThrow(() -> new UnauthorizedException("이메일 또는 비밀번호가 일치하지 않습니다."));
     }
 }
