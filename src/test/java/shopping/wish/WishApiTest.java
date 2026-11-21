@@ -145,6 +145,38 @@ class WishApiTest {
         assertThat(wishRepository.count()).isEqualTo(2);
     }
 
+    @Test
+    @DisplayName("인증된 사용자는 자신의 위시 리스트에 등록된 상품 목록을 조회할 수 있다")
+    void findMyWishes() throws Exception {
+        String myToken = registerAndGetToken("me@example.com");
+        String otherToken = registerAndGetToken("other@example.com");
+        addWish(myToken, saveProduct("사과"));
+        addWish(myToken, saveProduct("배"));
+        addWish(otherToken, saveProduct("수박"));
+
+        assertThat(getWishes().header(HttpHeaders.AUTHORIZATION, bearer(myToken)))
+                .hasStatus(HttpStatus.OK)
+                .bodyJson()
+                .extractingPath("$[*].name").asArray()
+                .containsExactlyInAnyOrder("사과", "배");
+    }
+
+    @Test
+    @DisplayName("토큰 없이 위시 리스트를 조회하면 요청을 거부한다")
+    void rejectFindWithoutToken() {
+        assertThat(getWishes())
+                .hasStatus(HttpStatus.UNAUTHORIZED)
+                .bodyJson()
+                .extractingPath("$.message").isEqualTo(INVALID_TOKEN_MESSAGE);
+    }
+
+    private void addWish(String token, Product product) {
+        String request = """
+                {"productId": %d}
+                """.formatted(product.getId());
+        postWish(request).header(HttpHeaders.AUTHORIZATION, bearer(token)).exchange();
+    }
+
     private String registerAndGetToken(String email) throws Exception {
         String request = """
                 {"email": "%s", "password": "password123"}
@@ -173,5 +205,9 @@ class WishApiTest {
                 .uri("/api/wishes")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body);
+    }
+
+    private MockMvcTester.MockMvcRequestBuilder getWishes() {
+        return mockMvc.get().uri("/api/wishes");
     }
 }

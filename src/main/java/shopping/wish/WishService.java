@@ -1,5 +1,6 @@
 package shopping.wish;
 
+import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import shopping.common.DuplicateException;
@@ -24,6 +25,13 @@ public class WishService {
         validateNotWished(memberId, product.getId());
         Wish wish = wishRepository.save(new Wish(memberId, product));
         return WishResponse.from(wish);
+    }
+
+    @Transactional(readOnly = true)
+    public List<WishResponse> findAll(Long memberId) {
+        return wishRepository.findAllByMemberId(memberId).stream()
+                .map(WishResponse::from)
+                .toList();
     }
 
     private Product getProduct(Long productId) {
